@@ -1,3 +1,8 @@
+
+#this will eventually take an input from a atmospheric 
+#pressure guage and output a prediction of the weather 
+#for the next day to be displayed on a LCD screen.
+
 import numpy as np
 #single neuron with 4 inputs, weights and a bias
 '''
