@@ -4,7 +4,7 @@
 #for the next day to be displayed on a LCD screen.
 
 import numpy as np
-
+import math
 
 #single neuron with 4 inputs, weights and a bias
 '''
@@ -117,10 +117,102 @@ print(output)
 class Activation_ReLU:
     def forward(self, inputs):
         self.output = np.maximum(0, inputs)
-
+'''
 layer1 = Layer_Dense(2, 5)
 activation1 = Activation_ReLU()
 layer1.forward(X)
 activation1.forward(layer1.output)
-#print(layer1.output)
+print(layer1.output)
 print(activation1.output)
+'''
+#softmax activation function
+'''
+layer_outputs = [4.8, 1.21, 2.385]
+E = math.e
+exp_values = []
+exp_values = np.exp(layer_outputs)
+print(exp_values)
+norm_values = exp_values / np.sum(exp_values)
+print(norm_values)
+print(sum(norm_values))
+'''
+'''
+this is the same as above but with a for loop instead of numpy
+for i in layer_outputs:
+    exp_values.append(E**i)
+print(exp_values)
+norm_base = sum(exp_values)
+normalized_values = []
+for i in exp_values:
+    normalized_values.append(i/norm_base)
+print(normalized_values)
+print(sum(normalized_values))
+'''
+'''
+layer_outputs = [[4.8, 1.21, 2.385], 
+                 [8.9, -1.81, 0.2], 
+                 [1.41, 1.051, 0.026]]
+exp_values = np.exp(layer_outputs)
+norm_values = exp_values / np.sum(exp_values, axis=1, keepdims=True) #axis 1 is the row, axis 0 is the column
+print(norm_values)
+print(np.sum(norm_values, axis=1))#keepdins true keeps the dimensions of the array the same, so it can be used for broadcasting
+'''
+class Activation_Softmax:
+    def forward(self, inputs):
+        exp_values = np.exp(inputs - np.max(inputs, axis=1 , keepdims=True))
+        probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
+        self.output = probabilities
+'''
+X, y = spiral_data(samples = 100,classes = 3)
+dense1 = Layer_Dense(2, 3)
+activation1 = Activation_ReLU()
+dense2 = Layer_Dense(3, 3)
+activation2 = Activation_Softmax()
+
+dense1.forward(X)
+activation1.forward(dense1.output)
+
+dense2.forward(activation1.output)
+activation2.forward(dense2.output)
+print(activation2.output)
+'''
+#calculating loss
+'''
+softmax_output_example = [0.7, 0.1, 0.2]
+target_output_example = [1, 0, 0]
+target_class = 0#this is the index of the correct class in the target output
+loss = -(math.log(softmax_output_example[target_class])*target_output_example[target_class]+
+         math.log(softmax_output_example[1])*target_output_example[1]+
+         math.log(softmax_output_example[2])*target_output_example[2])
+print(loss)
+#same as 
+loss = -math.log(softmax_output_example[target_class])
+print(loss)
+'''
+softmax_output_examples = np.array([[0.7, 0.1, 0.2],
+                                    [0.5, 0.1, 0.4],
+                                    [0.02, 0.9, 0.08]])
+class_Targets = [0, 1, 1]
+print(softmax_output_examples[[0, 1, 2], class_Targets])
+print(softmax_output_examples[range(len(softmax_output_examples)), class_Targets])
+loss = -np.log(softmax_output_examples[range(len(softmax_output_examples)), class_Targets])
+print(loss)
+average_loss = np.mean(loss)
+class loss:
+    def calculate(self, output, y):
+        sample_losses = self.forward(output, y)
+        data_loss = np.mean(sample_losses)
+        return data_loss
+class Loss_CategoricalCrossentropy(loss):
+    def forward(self, y_pred, y_true):
+        samples = len(y_pred)
+        y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+        if len(y_true.shape) == 1:
+            correct_confidences = y_pred_clipped[range(samples), y_true]
+        elif len(y_true.shape) == 2:
+            correct_confidences = np.sum(y_pred_clipped*y_true, axis=1)
+        negative_log_likelihoods = -np.log(correct_confidences)
+        return negative_log_likelihoods
+predictions = np.argmax(softmax_output_examples, axis=1)
+accuracy = np.mean(predictions == class_Targets)
+print('Accuracy:', accuracy)
