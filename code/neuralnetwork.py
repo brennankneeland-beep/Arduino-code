@@ -78,7 +78,8 @@ import nnfs
 from nnfs.datasets import spiral_data
 
 nnfs.init()
-X, y = spiral_data(100, 3)
+
+#X, y = spiral_data(100, 3)
 '''
 X = [[1, 2, 3, 2.5],
      [2.0, 5.0, -1.0, 2.0],
@@ -100,6 +101,7 @@ layer2.forward(layer1.output)
 print(layer2.output)
 '''
 #rectufied linear activation function
+'''
 inputs = [0, 2, -1, 3.3, -2.7, 1.1, 2.2, -100]
 output =[]
 for i in inputs:
@@ -107,6 +109,7 @@ for i in inputs:
         output.append(i)
     elif i <= 0:
         output.append(0)
+'''
 #same thing but with max function
 '''
 output = []
@@ -215,6 +218,13 @@ class Loss_CategoricalCrossentropy(loss):
             correct_confidences = np.sum(y_pred_clipped*y_true, axis=1)
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+        labels = len(dvalues[0])#note 0 can be replaced with any number as long as its not out of bounds
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
+        self.dinputs = -y_true / dvalues
+        self.dinputs = self.dinputs / samples
 '''
 predictions = np.argmax(softmax_output_examples, axis=1)
 accuracy = np.mean(predictions == class_Targets)
@@ -330,7 +340,7 @@ dvals = np.array([[1, 1, 1],
                   [2, 2, 2],
                   [3, 3, 3]])
 inputs = np.array([[1, 2, 3, 2.5],
-                   [2.0, 5.0, -1.0, 2.0],
+                   [2., 5., -1., 2],
                    [-1.5, 2.7, 3.3, -0.8]])
 weights = np.array([[0.2, 0.8, -0.5, 1.0],
                     [0.5, -0.91, 0.26, -0.5],
@@ -338,18 +348,18 @@ weights = np.array([[0.2, 0.8, -0.5, 1.0],
 biases = np.array([[2, 3, 0.5]])
 
 layer_outputs = np.dot(inputs, weights) + biases
+
+
 relu_outputs = np.maximum(0, layer_outputs)
 
-drelu = dvals.copy()
+drelu = relu_outputs.copy()
 drelu[layer_outputs <= 0] = 0
-print(drelu)
+
 dinputs = np.dot(drelu, weights.T)
 dweights = np.dot(inputs.T, drelu)
 dbiases = np.sum(drelu, axis=0, keepdims=True)
-print(dinputs)
-print(dweights)
-print(dbiases)
-weights -= 0.001*dweights
-biases -= 0.001*dbiases
+
+weights += -0.001*dweights
+biases += -0.001*dbiases
 print(weights)
 print(biases)

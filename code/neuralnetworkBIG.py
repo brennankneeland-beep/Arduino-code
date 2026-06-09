@@ -49,6 +49,13 @@ class Loss_CategoricalCrossentropy(loss):
             correct_confidences = np.sum(y_pred_clipped*y_true, axis=1)
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+        labels = len(dvalues[0])#note 0 can be replaced with any number as long as its not out of bounds
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
+        self.dinputs = -y_true / dvalues
+        self.dinputs = self.dinputs / samples
     
 
 X, y = spiral_data(samples = 100,classes = 3)
