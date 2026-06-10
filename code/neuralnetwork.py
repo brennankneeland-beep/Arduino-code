@@ -165,6 +165,12 @@ class Activation_Softmax:
         exp_values = np.exp(inputs - np.max(inputs, axis=1 , keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
+    def backward(self, dvalues):
+        self.dinputs = np.empty_like(dvalues)
+        for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
+            single_output = single_output.reshape(-1, 1)
+            jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+            self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 '''
 X, y = spiral_data(samples = 100,classes = 3)
 dense1 = Layer_Dense(2, 3)
@@ -335,7 +341,8 @@ drelu = dvals.copy()
 drelu[z <= 0] = 0
 print(drelu)
 '''
-#finally: 
+#finally:
+''' 
 dvals = np.array([[1, 1, 1],
                   [2, 2, 2],
                   [3, 3, 3]])
@@ -363,3 +370,11 @@ weights += -0.001*dweights
 biases += -0.001*dbiases
 print(weights)
 print(biases)
+'''
+softmax_outputs = [0.7, 0.1, 0.2]
+softmax_outputs = np.array(softmax_outputs).reshape(-1, 1)
+print(softmax_outputs)
+print(np.diagflat(softmax_outputs))
+print(np.dot(softmax_outputs, softmax_outputs.T))
+x = (np.diagflat(softmax_outputs) - np.dot(softmax_outputs, softmax_outputs.T))
+print(np.dot(x, softmax_outputs))
