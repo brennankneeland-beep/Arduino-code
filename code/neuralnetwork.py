@@ -371,6 +371,7 @@ biases += -0.001*dbiases
 print(weights)
 print(biases)
 '''
+'''
 softmax_outputs = [0.7, 0.1, 0.2]
 softmax_outputs = np.array(softmax_outputs).reshape(-1, 1)
 print(softmax_outputs)
@@ -378,3 +379,34 @@ print(np.diagflat(softmax_outputs))
 print(np.dot(softmax_outputs, softmax_outputs.T))
 x = (np.diagflat(softmax_outputs) - np.dot(softmax_outputs, softmax_outputs.T))
 print(np.dot(x, softmax_outputs))
+'''
+class Activation_Softmax_Loss_CategoricalCrossentropy():
+    def __init__(self):
+        self.activation = Activation_Softmax()
+        self.loss = Loss_CategoricalCrossentropy()
+    def forward(self, inputs, y_true):
+        self.activation.forward()
+        self.output = self.activation.output
+        return self.loss.calculate(self.output, y_true)
+    def backwards(self, dvalues, y_true):
+        samples = len(dvalues)
+        if len(y_true.shape) == 2:
+            y_true = np.argmax(y_true, axis = 1)
+        self.dinputs = dvalues.copy()
+        self.dinputs[range(samples), y_true] -= 1
+        self.dinputs = self.dinputs/samples
+softmax_outputs = np.array([[.7, .1, .3],
+                           [.1, .5, .4],
+                           [.02, .9, .08]])
+class_targets = np.array([0, 1, 1])
+softmax_loss = Activation_Softmax_Loss_CategoricalCrossentropy()
+softmax_loss.backwards(softmax_outputs, class_targets)
+dvals1 = softmax_loss.dinputs
+activation = Activation_Softmax()
+lo = Loss_CategoricalCrossentropy()
+activation.output = softmax_outputs
+lo.backward(softmax_outputs, class_targets)
+activation.backward(lo.dinputs)
+dvals2 = activation.dinputs
+print(dvals1)
+print(dvals2)
