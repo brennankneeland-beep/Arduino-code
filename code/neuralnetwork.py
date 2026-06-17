@@ -87,10 +87,16 @@ X = [[1, 2, 3, 2.5],
 '''
 class Layer_Dense:
     def __init__(self, n_inputs, n_neurons):
-        self.weights = 0.10* np.random.randn(n_inputs, n_neurons)
+        self.weights = 0.01* np.random.randn(n_inputs, n_neurons)
         self.biases = np.zeros((1, n_neurons))
+        
     def forward(self, inputs):
         self.output = np.dot(inputs, self.weights) + self.biases
+        self.inputs = inputs
+    def backward(self, dvalues):
+        self.dweights = np.dot(self.inputs.T, dvalues)
+        self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
+        self.dinputs = np.dot(dvalues, self.weights.T)
 
 '''
 layer1 = Layer_Dense(4, 5)
@@ -120,6 +126,10 @@ print(output)
 class Activation_ReLU:
     def forward(self, inputs):
         self.output = np.maximum(0, inputs)
+        self.inputs = inputs
+    def backward(self, dvalues):
+        self.dinputs = dvalues.copy()
+        self.dinputs[self.inputs <= 0] = 0
 '''
 layer1 = Layer_Dense(2, 5)
 activation1 = Activation_ReLU()
@@ -385,7 +395,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         self.activation = Activation_Softmax()
         self.loss = Loss_CategoricalCrossentropy()
     def forward(self, inputs, y_true):
-        self.activation.forward()
+        self.activation.forward(inputs)
         self.output = self.activation.output
         return self.loss.calculate(self.output, y_true)
     def backwards(self, dvalues, y_true):
@@ -398,6 +408,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
 softmax_outputs = np.array([[.7, .1, .3],
                            [.1, .5, .4],
                            [.02, .9, .08]])
+'''
 class_targets = np.array([0, 1, 1])
 softmax_loss = Activation_Softmax_Loss_CategoricalCrossentropy()
 softmax_loss.backwards(softmax_outputs, class_targets)
@@ -410,3 +421,39 @@ activation.backward(lo.dinputs)
 dvals2 = activation.dinputs
 print(dvals1)
 print(dvals2)
+'''
+#optimizer
+class Optimizer_SGD:
+    def __init__(self, learning_rate=1.0):
+        self.learning_rate = learning_rate
+    def update_params(self, layer):
+        layer.weights += -self.learning_rate * layer.dweights
+        layer.biases += -self.learning_rate * layer.dbiases
+X, y = spiral_data(samples = 100, classes = 3)
+dense1 = Layer_Dense(2, 64)
+activation1 = Activation_ReLU()
+dense2 = Layer_Dense(64, 3)
+loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+optimizer = Optimizer_SGD()
+for epoch in range(10001):
+    dense1.forward(X)
+    activation1.forward(dense1.output)
+    dense2.forward(activation1.output)
+    Loss = loss_activation.forward(dense2.output, y)
+    predictions = np.argmax(loss_activation.output, axis = 1)
+    if len(y.shape) == 2:
+        y = np.argmax(y, axis = 1)
+    accuracy = np.mean(predictions == y)
+    if not epoch % 100:
+        print(f'epoch: {epoch}, '+
+              f'acc: {accuracy:.3f}' +
+              f'loss: {Loss:.3f}'
+            )
+    #back pass
+    loss_activation.backwards(loss_activation.output, y)
+    dense2.backward(loss_activation.dinputs)
+    activation1.backward(dense2.dinputs)
+    dense1.backward(activation1.dinputs)
+    #update weights with optimizer
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
