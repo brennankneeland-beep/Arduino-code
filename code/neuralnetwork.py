@@ -429,6 +429,7 @@ class Optimizer_SGD:
     def update_params(self, layer):
         layer.weights += -self.learning_rate * layer.dweights
         layer.biases += -self.learning_rate * layer.dbiases
+'''
 X, y = spiral_data(samples = 100, classes = 3)
 dense1 = Layer_Dense(2, 64)
 activation1 = Activation_ReLU()
@@ -457,3 +458,13 @@ for epoch in range(10001):
     #update weights with optimizer
     optimizer.update_params(dense1)
     optimizer.update_params(dense2)
+'''
+starting = 1
+decay = 0.1
+
+for step in range(20):
+    learning_rate = starting *\
+        (1./(1+decay*step))
+
+print(learning_rate)
+optimizer = Optimizer_SGD(learning_rate)

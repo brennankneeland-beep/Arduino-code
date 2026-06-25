@@ -70,7 +70,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         self.activation.forward(inputs)
         self.output = self.activation.output
         return self.loss.calculate(self.output, y_true)
-    def backwards(self, dvalues, y_true):
+    def backward(self, dvalues, y_true):
         samples = len(dvalues)
         if len(y_true.shape) == 2:
             y_true = np.argmax(y_true, axis = 1)
@@ -78,12 +78,20 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         self.dinputs[range(samples), y_true] -= 1
         self.dinputs = self.dinputs/samples
 class Optimizer_SGD:
-    def __init__(self, learning_rate=1.0):
+    def __init__(self, learning_rate=1., decay = 0):
         self.learning_rate = learning_rate
+        self.current_learning_rate = learning_rate
+        self.decay = decay
+        self.iterations = 0
+    def pre_update_params(self):
+        if self.decay:
+            self.current_learning_rate = self.learning_rate *\
+                (1. / (1 + self.decay*self.iterations))
     def update_params(self, layer):
-        layer.weights += -self.learning_rate * layer.dweights
-        layer.biases += -self.learning_rate * layer.dbiases
-    
+        layer.weights += -self.current_learning_rate * layer.dweights
+        layer.biases += -self.current_learning_rate * layer.dbiases
+    def post_update_params(self):
+        self.iterations += 1
 '''
 
 X, y = spiral_data(samples = 100,classes = 3)
@@ -107,7 +115,7 @@ if len(y.shape) == 2:
 accuracy = np.mean(predictions == y)
 print('accuracy:', accuracy)
 
-loss_activation.backwards(loss_activation.output, y)
+loss_activation.backward(loss_activation.output, y)
 dense2.backward(loss_activation.dinputs)
 activation1.backward(dense2.dinputs)
 dense1.backward(activation1.dinputs)
@@ -117,13 +125,13 @@ print(dense1.dbiases)
 print(dense2.dweights)
 print(dense2.dbiases)
 '''
-
+'''
 X, y = spiral_data(samples = 100, classes = 3)
 dense1 = Layer_Dense(2, 64)
 activation1 = Activation_ReLU()
 dense2 = Layer_Dense(64, 3)
 loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
-optimizer = Optimizer_SGD()
+optimizer = Optimizer_SGD(decay = 1e-5)
 epochs = []
 accuracies = []
 losses = []
@@ -138,20 +146,23 @@ for epoch in range(50001):
     accuracy = np.mean(predictions == y)
     if not epoch % 100:
         print(f'epoch: {epoch}, '+
-              f'acc: {accuracy:.3f}' +
-              f'loss: {loss:.3f}'
+            f'acc: {accuracy:.3f}' +
+            f'loss: {loss:.3f}'
             )
         accuracies.append(accuracy)
         epochs.append(epoch)
         losses.append(loss)
     #back pass
-    loss_activation.backwards(loss_activation.output, y)
+    loss_activation.backward(loss_activation.output, y)
     dense2.backward(loss_activation.dinputs)
     activation1.backward(dense2.dinputs)
     dense1.backward(activation1.dinputs)
     #update weights with optimizer
+    optimizer.pre_update_params()
     optimizer.update_params(dense1)
     optimizer.update_params(dense2)
+    optimizer.post_update_params()
+
 plt.plot(epochs, accuracies)
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
@@ -174,3 +185,6 @@ if len(b.shape) == 2:
     b = np.argmax(b, axis = 1)
 accuracy = np.mean(predictions == b)
 print(accuracy)
+
+
+'''
