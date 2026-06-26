@@ -21,7 +21,12 @@ params = {
         "temperature_2m_max",
         "temperature_2m_min",
         "wind_speed_10m_max",
-        "precipitation_sum"
+        "precipitation_sum",
+        "relative_humidity_2m_min",
+        "relative_humidity_2m_max",
+        "surface_pressure_mean", "surface_pressure_max",
+        "surface_pressure_min",
+        "et0_fao_evapotranspiration_sum"
     ]
 }
 
@@ -33,6 +38,12 @@ temps_max  = daily.Variables(1).ValuesAsNumpy()
 temps_min  = daily.Variables(2).ValuesAsNumpy()
 wind_max   = daily.Variables(3).ValuesAsNumpy()
 precip     = daily.Variables(4).ValuesAsNumpy()
+relative_humidity = daily.Variables(5).ValuesAsNumpy()
+relative_humidity_2m_max = daily.Variables(6).ValuesAsNumpy()
+surface_pressure_mean = daily.Variables(7).ValuesAsNumpy()
+surface_pressure_max = daily.Variables(8).ValuesAsNumpy()
+surface_pressure_min = daily.Variables(9).ValuesAsNumpy()
+evapotranspiration_sum = daily.Variables(10).ValuesAsNumpy()
 
 dates = pd.date_range(
     start=pd.to_datetime(daily.Time(), unit="s", utc=True),
@@ -48,7 +59,13 @@ min_len = min(
     len(temps_max),
     len(temps_min),
     len(wind_max),
-    len(precip)
+    len(precip),
+    len(relative_humidity),
+    len(relative_humidity_2m_max),
+    len(surface_pressure_mean),
+    len(surface_pressure_max),
+    len(surface_pressure_min),
+    len(evapotranspiration_sum)
 )
 
 dates = dates[:min_len]
@@ -57,6 +74,12 @@ temps_max = temps_max[:min_len]
 temps_min = temps_min[:min_len]
 wind_max = wind_max[:min_len]
 precip = precip[:min_len]
+relative_humidity = relative_humidity[:min_len]
+relative_humidity_2m_max = relative_humidity_2m_max[:min_len]
+surface_pressure_mean = surface_pressure_mean[:min_len]
+surface_pressure_max = surface_pressure_max[:min_len]
+surface_pressure_min = surface_pressure_min[:min_len]
+evapotranspiration_sum = evapotranspiration_sum[:min_len]
 
 
 X = []
@@ -71,7 +94,13 @@ for i in range(min_len - 1):
         temps_max[i],
         temps_min[i],
         wind_max[i],
-        precip[i]
+        precip[i],
+        relative_humidity[i],
+        relative_humidity_2m_max[i],
+        surface_pressure_mean[i],
+        surface_pressure_max[i],
+        surface_pressure_min[i],
+        evapotranspiration_sum[i]
     ])
 
     if i < len(precip) - 1:
@@ -84,7 +113,6 @@ mean = X.mean(axis=0)
 std = X.std(axis=0)
 std[std == 0] = 1
 
-X = (X - mean) / std
 
 
 scaler = {
